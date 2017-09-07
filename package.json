@@ -1,9 +1,14 @@
 {
-  "name": "example",
+  "name": "synchronous-infinite-list-experiment",
   "version": "0.0.1",
   "private": true,
   "scripts": {
     "start": "node node_modules/react-native/local-cli/cli.js start"
+  },
+  "author": {
+    "name": "Ioannis Kokkinidis",
+    "email": "sudoplz@gmail.com",
+    "url": "https://www.linkedin.com/in/sudoplz"
   },
   "dependencies": {
     "react": "^16.0.0-alpha.12",
