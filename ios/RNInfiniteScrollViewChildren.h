@@ -18,5 +18,6 @@
 
 @property (nonatomic) float rowHeight;
 @property (nonatomic) NSInteger numRenderRows;
+@property (nonatomic) BOOL loop;
 
 @end

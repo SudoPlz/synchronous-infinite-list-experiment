@@ -15,11 +15,13 @@ RCT_EXPORT_MODULE()
 - (UIView *)view
 {
   _scrollView = [[RNInfiniteScrollViewChildren alloc] initWithBridge:self.bridge];
+//  [_scrollView setFrame:CGRectMake(0, 0, 960, 1132)];
   return _scrollView;
 }
 
 RCT_EXPORT_VIEW_PROPERTY(rowHeight, float)
 RCT_EXPORT_VIEW_PROPERTY(numRenderRows, NSInteger)
+RCT_EXPORT_VIEW_PROPERTY(loop, BOOL)
 
 
 RCT_EXPORT_METHOD(prepareRows)

@@ -11,5 +11,6 @@
 
 @interface RNInfiniteScrollViewChildrenManager : RCTViewManager
 -(void) prepareRows:(nonnull NSNumber *)reactTag;
-@property (nonatomic, strong) RNInfiniteScrollViewChildren *scrollView;
+@property (nonatomic, strong) RNInfiniteScrollViewChildren * _Nullable scrollView;
+@property (nonatomic) BOOL loop;
 @end

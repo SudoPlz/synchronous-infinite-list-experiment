@@ -17,15 +17,16 @@
 
 @implementation RNInfiniteScrollViewChildren
 
-  RCTBridge *_bridge;
-  RCTEventDispatcher *_eventDispatcher;
-  NSMutableArray *_renderRows;
-  int _firstRenderRow;
-  float _firstRenderRowOffset;
-  int _firstRowIndex;
-  const int ROW_BUFFER = 2;
-  float _contentOffsetShift;
-  NSArray *dataSource;
+RCTBridge *_bridge;
+RCTEventDispatcher *_eventDispatcher;
+NSMutableArray *_renderRows;
+int _firstRenderRow;
+float _firstRenderRowOffset;
+int _firstRowIndex;
+const int ROW_BUFFER = 2;
+float _contentOffsetShift;
+NSArray *dataSource;
+BOOL rowsAreCreated = NO;
 
 - (instancetype)initWithBridge:(RCTBridge *)bridge {
   RCTAssertParam(bridge);
@@ -62,13 +63,13 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
 - (void)insertReactSubview:(UIView *)subview atIndex:(NSInteger)atIndex
 {
   // we comment the following lines out bc we don't want to add any views from jsx
-
+  
   //  [_renderRows addObject:subview];
   //  [self insertSubview:subview atIndex:atIndex];
   //  [self bind:subview atIndex:(int)atIndex toRowIndex:(int)atIndex];
   // instead all of that logic will take place in createRows
-  NSLog(@"attempt to insertReactSubview");
 }
+
 
 
 - (void)recenterIfNecessary
@@ -78,15 +79,20 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
   CGFloat centerOffsetY = (contentHeight - [self bounds].size.height) / 2.0;
   CGFloat distanceFromCenter = fabs(currentOffset.y - centerOffsetY);
   
-  if (distanceFromCenter > (contentHeight / 4.0))
+  if ([_renderRows count] > 0 && distanceFromCenter > (contentHeight / 4.0))
   {
+    NSLog(@"*** NOW RECENTERING");
     self.contentOffset = CGPointMake(currentOffset.x, centerOffsetY);
     
+          int ii = 0;
     // move content by the same amount so it appears to stay still
     for (UIView *view in _renderRows) {
       CGPoint center = view.center;
-      center.y += (centerOffsetY - currentOffset.y * 1.1);
+//      double old = center.y;
+      center.y += (centerOffsetY - currentOffset.y);
+//      NSLog(@"new Y for %d old y %f, new y: %f", ii, old, center.y);
       view.center = center;
+      ii++;
     }
     
     _contentOffsetShift += (centerOffsetY - currentOffset.y);
@@ -101,18 +107,34 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
   [self recenterIfNecessary];
   
   CGPoint currentOffset = [self contentOffset];
-  if (currentOffset.y - _contentOffsetShift + self.frame.size.height >
-      _firstRenderRowOffset + (self.rowHeight * (self.numRenderRows - ROW_BUFFER))) {
+  
+  //  NSLog(@"cur y %f", curYValue);
+//  NSLog(@"cur y %f", curYValue);
+
+  double curYValue = currentOffset.y - _contentOffsetShift;
+  double furthestPointBottom = _firstRenderRowOffset + (self.rowHeight * (self.numRenderRows - ROW_BUFFER));
+  /* the furthest point bottom is
+   _firstRenderRowOffset (where we started rendering)
+   + the height of all the rows minus the ROW_BUFFER (rows outside the screen)
+   */
+  if (curYValue + self.frame.size.height > furthestPointBottom) {
     [self moveFirstRenderRowToEnd];
   }
-  if (currentOffset.y - _contentOffsetShift <
-      _firstRenderRowOffset + (self.rowHeight * ROW_BUFFER)) {
+  
+  double furthestPointTop = _firstRenderRowOffset; //  + (self.rowHeight * ROW_BUFFER)
+  /* the furthest point top is
+   _firstRenderRowOffset (where we started rendering)
+   + the height of the ROW_BUFFER rows (rows outside the screen)
+   */
+
+  if (curYValue < furthestPointTop) {
     [self moveLastRenderRowToBeginning];
   }
 }
 
 - (void)moveFirstRenderRowToEnd {
-  if (self.numRenderRows > 0 && [_renderRows count] > 0) {
+  if (rowsAreCreated == YES && self.numRenderRows > 0 && [_renderRows count] > 0) {
+    NSLog(@"************* moveFirstRenderRowToEnd");
     UIView *view = _renderRows[_firstRenderRow];
     CGPoint center = view.center;
     center.y += self.rowHeight * self.numRenderRows;
@@ -125,7 +147,8 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
 }
 
 - (void)moveLastRenderRowToBeginning {
-  if (self.numRenderRows > 0 && [_renderRows count] > 0) {
+  if (rowsAreCreated == YES && self.numRenderRows > 0 && [_renderRows count] > 0) {
+    NSLog(@"******* moveLastRenderRowToBeginning");
     int _lastRenderRow = (_firstRenderRow + self.numRenderRows - 1) % (int)self.numRenderRows;
     UIView *view = _renderRows[_lastRenderRow];
     CGPoint center = view.center;
@@ -141,11 +164,12 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
 - (void)bind:(UIView *)child atIndex:(int)childIndex toRowIndex:(int)rowIndex
 {
   if (dataSource != nil && [dataSource count] > rowIndex) {
-    NSLog(@"******* Binding childIndex %d to row %d", childIndex, rowIndex);
+    NSLog(@"******* Binding childIndex %d to data row %d", childIndex, rowIndex);
     NSString* curRowValue = [dataSource objectAtIndex:rowIndex];
-    RCCSyncRootView *rootView = [[RCCSyncRootView alloc] initWithBridge:_bridge moduleName:@"RNInfiniteScrollViewRowTemplate" initialProperties:@{ @"rowValue" : curRowValue }];
-    
-    [_renderRows replaceObjectAtIndex:childIndex withObject:rootView];
+    RCCSyncRootView *curRowView = _renderRows[childIndex];
+    if (curRowView) {
+      [curRowView updateProps:@{ @"rowValue" : curRowValue }];
+    }
   }
 }
 
@@ -155,16 +179,42 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
   for (int i = 0; i < self.numRenderRows; i++)
   {
     dispatch_async(dispatch_get_main_queue(), ^
-    {
-      if (dataSource != nil && [dataSource count] > i) {
-        NSLog(@"******* ITEM AT %d", i);
-        NSString* curRowValue = [dataSource objectAtIndex:i];
-        RCCSyncRootView *rootView = [[RCCSyncRootView alloc] initWithBridge:_bridge moduleName:@"RNInfiniteScrollViewRowTemplate" initialProperties:@{ @"rowValue" : curRowValue }];
-        [_renderRows addObject:rootView];
-        [self insertSubview:rootView atIndex:i];
-      }
-    });
+                   {
+                     if (dataSource != nil && [dataSource count] > i) {
+                       NSString* curRowValue = [dataSource objectAtIndex:i];
+                       RCCSyncRootView *rootView = [[RCCSyncRootView alloc] initWithBridge:_bridge moduleName:@"RNInfiniteScrollViewRowTemplate" initialProperties:@{ @"rowValue" : curRowValue }];
+                       //        [rootView setFrame:CGRectMake(0, 0, 1000, self.rowHeight)];
+                       CGPoint center = rootView.center;
+                       center.y = self.rowHeight * i;
+                       NSLog(@"******* ITEM AT %d, will place that at %f", i, center.y);
+                       rootView.center = center;
+                       rootView.backgroundColor = [UIColor yellowColor];
+                       [_renderRows addObject:rootView];
+                       [self insertSubview:rootView atIndex:i];
+                     }
+                   });
   }
+  rowsAreCreated = YES;
 }
+
+#pragma mark - UIScrollViewDelegate callbacks
+
+//-(void) scrollViewDidScroll {
+//  NSLog(@"scrollViewDidScroll");
+//}
+
+-(void) scrollViewWillBeginDragging {
+  NSLog(@"scrollViewWillBeginDragging");
+}
+
+-(void) scrollViewWillEndDragging {
+  NSLog(@"scrollViewWillEndDragging");
+}
+
+-(void) scrollViewDidEndDragging {
+  NSLog(@"scrollViewDidEndDragging");
+}
+
+
 
 @end

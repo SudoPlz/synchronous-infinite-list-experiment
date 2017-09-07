@@ -8,6 +8,7 @@ import { AppRegistry,
   findNodeHandle,
   TextInput,
   NativeModules,
+  Dimensions
 } from 'react-native';
 
 import SyncRegistry from './lib/SyncRegistry';
@@ -43,9 +44,9 @@ class example extends Component {
     return (
       <View style={styles.container}>
         <RNInfiniteScrollViewChildren
-          style={{flex: 1, backgroundColor: 'red' }}
-          rowHeight={300}
-          numRenderRows={5}
+          style={{ top: 0, width: Dimensions.get('window').width, height: Dimensions.get('window').height, backgroundColor: 'pink' }}
+          rowHeight={200}
+          numRenderRows={10}
         />
       </View>
     );
@@ -56,8 +57,6 @@ class example extends Component {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
     backgroundColor: '#D5D7FF',
   },
 });
