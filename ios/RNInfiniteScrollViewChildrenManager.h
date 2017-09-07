@@ -7,7 +7,9 @@
 //
 
 #import "RCTViewManager.h"
+#import "RNInfiniteScrollViewChildren.h"
 
 @interface RNInfiniteScrollViewChildrenManager : RCTViewManager
-
+-(void) prepareRows:(nonnull NSNumber *)reactTag;
+@property (nonatomic, strong) RNInfiniteScrollViewChildren *scrollView;
 @end

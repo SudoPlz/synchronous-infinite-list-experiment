@@ -7,7 +7,6 @@
 //
 
 #import "RNInfiniteScrollViewChildrenManager.h"
-#import "RNInfiniteScrollViewChildren.h"
 
 @implementation RNInfiniteScrollViewChildrenManager
 
@@ -15,10 +14,17 @@ RCT_EXPORT_MODULE()
 
 - (UIView *)view
 {
-  return [[RNInfiniteScrollViewChildren alloc] initWithBridge:self.bridge];
+  _scrollView = [[RNInfiniteScrollViewChildren alloc] initWithBridge:self.bridge];
+  return _scrollView;
 }
 
 RCT_EXPORT_VIEW_PROPERTY(rowHeight, float)
 RCT_EXPORT_VIEW_PROPERTY(numRenderRows, NSInteger)
+
+
+RCT_EXPORT_METHOD(prepareRows)
+{
+  [_scrollView createRows];
+}
 
 @end

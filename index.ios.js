@@ -3,50 +3,62 @@ import { AppRegistry,
   StyleSheet,
   Text,
   View,
-  TouchableOpacity
+  TouchableOpacity,
+  requireNativeComponent,
+  findNodeHandle,
+  TextInput,
+  NativeModules,
 } from 'react-native';
 
-import TableViewChildrenExample from './tableview-children';
-import InfiniteScrollViewChildrenExample from './infinite-scrollview-children';
+import SyncRegistry from './lib/SyncRegistry';
+const RNInfiniteScrollViewChildren = requireNativeComponent('RNInfiniteScrollViewChildren', null);
 
-class example extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      example: undefined
-    };
-  }
+
+
+
+class RNInfiniteScrollViewRowTemplate extends Component {
   render() {
-    if (this.state.example) {
-      const Example = this.state.example;
-      return <Example />;
-    }
     return (
-      <View style={styles.container}>
-
-        <TouchableOpacity onPress={() => this.setState({example: TableViewChildrenExample})}>
-          <Text style={{color: 'blue', marginBottom: 20}}>
-            TableView with Children
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity onPress={() => this.setState({example: InfiniteScrollViewChildrenExample})}>
-          <Text style={{color: 'blue', marginBottom: 20}}>
-            Infinite ScrollView with Children
-          </Text>
-        </TouchableOpacity>
-
+      <View style={{padding: 10, width: 120, height: 80, backgroundColor: 'red'}}>
+        <TextInput
+          style={{ backgroundColor: 'blue', flexGrow: 1 }}
+          editable={false}
+          value={this.props.rowValue}
+        />
       </View>
     );
   }
 }
+
+SyncRegistry.registerComponent('RNInfiniteScrollViewRowTemplate', () => RNInfiniteScrollViewRowTemplate, ['rowValue']);
+var IScrollManager = NativeModules.RNInfiniteScrollViewChildrenManager;
+
+class example extends Component {
+  componentWillMount() {
+    setTimeout(() => {
+      IScrollManager.prepareRows();
+    }, 1000)
+  }
+  render() {
+    return (
+      <View style={styles.container}>
+        <RNInfiniteScrollViewChildren
+          style={{flex: 1, backgroundColor: 'red' }}
+          rowHeight={300}
+          numRenderRows={5}
+        />
+      </View>
+    );
+  }
+}
+
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F5FCFF',
+    backgroundColor: '#D5D7FF',
   },
 });
 

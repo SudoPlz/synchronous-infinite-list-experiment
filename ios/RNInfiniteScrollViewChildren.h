@@ -7,11 +7,14 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "RCCSyncRootView.h"
+
 @class RCTBridge;
 
 @interface RNInfiniteScrollViewChildren : UIScrollView <UIScrollViewDelegate>
 
 - (instancetype)initWithBridge:(RCTBridge *)bridge NS_DESIGNATED_INITIALIZER;
+- (void) createRows;
 
 @property (nonatomic) float rowHeight;
 @property (nonatomic) NSInteger numRenderRows;
