@@ -21,6 +21,7 @@
 @end
 
 @implementation RNInfiniteScrollViewChildren
+@synthesize data;
 
 RCTBridge *_bridge;
 RCTEventDispatcher *_eventDispatcher;
@@ -30,7 +31,6 @@ float _firstRenderRowOffset;
 int _firstRowIndex;
 const int ROW_BUFFER = 2;
 float _contentOffsetShift;
-NSArray *dataSource;
 BOOL rowsAreCreated = NO;
 int createdRowCnt = 0;
 
@@ -47,7 +47,6 @@ int createdRowCnt = 0;
     }
     
     _renderRows = [NSMutableArray array];
-    dataSource = @[@"Row 0", @"Row 1", @"Row 2", @"Row 3", @"Row 4", @"Row 5", @"Row 6", @"Row 7", @"Row 8", @"Row 9", @"Row 10", @"Row 11", @"Row 12", @"Row 13", @"Row 14", @"Row 15", @"Row 16", @"Row 17", @"Row 18", @"Row 19"];
     _firstRenderRow = 0;
     _firstRenderRowOffset = 0;
     _firstRowIndex = 0;
@@ -88,11 +87,13 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
   CGFloat contentHeight = [self contentSize].height;
   CGFloat centerOffsetY = (contentHeight - [self bounds].size.height) / 2.0; // find the center Y point
   CGFloat distanceFromCenter = fabs(currentOffset.y - centerOffsetY); // find the distance of the center Y
+  NSLog(@"distance from center: %f", distanceFromCenter);
+  NSLog(@"_renderRows.count: %lu", (unsigned long)_renderRows.count);
 //  NSLog(@"cur offset %f w/ content height %f, and center x: %f, so the distance from center is %f", currentOffset.y, contentHeight, centerOffsetY, distanceFromCenter);
 
   if (rowsAreCreated == YES // if the rows have been created
-      && [self.loopMode  isEqual: LOOP_MODE_NONE] == NO // if we're NOT on loop mode
-      && [_renderRows count] > 0 // and we got renderRows
+      // && [self.loopMode  isEqual: LOOP_MODE_NONE] == NO // if we're NOT on loop mode
+      && _renderRows.count > 0 // and we got renderRows
       && distanceFromCenter > (contentHeight / 4.0)) // and we have scrolled more than 25% ahead
   {
     // setting the Y value to be equal to the center Y point
@@ -113,7 +114,7 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
 - (void)layoutSubviews {
   [super layoutSubviews];
   
-  self.contentSize = CGSizeMake(self.frame.size.width, self.rowHeight * self.numRenderRows * 2);
+  self.contentSize = CGSizeMake(self.frame.size.width, self.rowHeight * data.count);
   
   [self recenterIfNecessary];
   
@@ -194,19 +195,19 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
 
 - (void)bind:(UIView *)child atIndex:(int)childIndex toRowIndex:(int)rowIndex
 {
-  if (dataSource != nil) {
+  if (data != nil) {
       NSLog(@"******* Binding childIndex %d to data row %d.", childIndex, rowIndex);
     
     RCCSyncRootView *curRowView = _renderRows[childIndex];
 
-    if (rowIndex >= 0 && rowIndex < dataSource.count) { // if the data index is within our datasource bounds
-      [curRowView updateProps: @{ @"rowValue" : [dataSource objectAtIndex:rowIndex]}]; // just update the row
+    if (rowIndex >= 0 && rowIndex < data.count) { // if the data index is within our data bounds
+      [curRowView updateProps: @{ @"rowValue" : [data objectAtIndex:rowIndex]}]; // just update the row
     } else {
       NSNumber *newDataIndex;
 
       if ([self.loopMode  isEqual: LOOP_MODE_REPEAT_EDGE]) { // if we're loop repeat-empty-mode
         // find the (absolute) modulo of the row index
-        int moduloRowIndex = (ABS(rowIndex) % dataSource.count);
+        int moduloRowIndex = (ABS(rowIndex) % data.count);
         if (rowIndex >= 0) { // if the row index is a positive number
           newDataIndex = [NSNumber numberWithInt:moduloRowIndex];
         } else { // else if the row index is a negative number
@@ -216,15 +217,15 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
           newDataIndex = moduloRowIndex == 0 ? // if the modulo is 0
             [NSNumber numberWithInt:moduloRowIndex] // just return the modulo
           :              // else
-            [NSNumber numberWithInt:(int) dataSource.count - moduloRowIndex];
+            [NSNumber numberWithInt:(int) data.count - moduloRowIndex];
           // we do that because we want the values to start again from the end of the array once the user reaches child 0 (a.k.a when rowIndex is negative)
         }
-        NSLog(@"rowIndex %d was translated to %d because %d mod %lu", rowIndex, newDataIndex.intValue, rowIndex, (unsigned long)dataSource.count);
+        NSLog(@"rowIndex %d was translated to %d because %d mod %lu", rowIndex, newDataIndex.intValue, rowIndex, (unsigned long)data.count);
       }
       
       if (newDataIndex != nil) { // if we have a newDataIndex value
         // just set the view data to the value of that index
-        [curRowView updateProps: @{ @"rowValue" : [dataSource objectAtIndex:newDataIndex.intValue]}];
+        [curRowView updateProps: @{ @"rowValue" : [data objectAtIndex:newDataIndex.intValue]}];
       } else { // otherwise if we don't have a value
         // set the view data to the empty view
         [curRowView updateProps:@{}];
@@ -244,8 +245,8 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
   {
     dispatch_async(dispatch_get_main_queue(), ^
                    {
-                     if (dataSource != nil && [dataSource count] > i) {
-                       NSString* curRowValue = [dataSource objectAtIndex:i];
+                     if (data != nil && [data count] > i) {
+                       NSString* curRowValue = [data objectAtIndex:i];
                        RCCSyncRootView *rootView = [[RCCSyncRootView alloc] initWithBridge:_bridge moduleName:@"RNInfiniteScrollViewRowTemplate" initialProperties:@{ @"rowValue" : curRowValue }];
                        //        [rootView setFrame:CGRectMake(0, 0, 1000, self.rowHeight)];
                        CGPoint center = rootView.center;

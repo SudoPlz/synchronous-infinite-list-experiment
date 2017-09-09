@@ -52,8 +52,9 @@ class example extends Component {
       <View style={styles.container}>
         <RNInfiniteScrollViewChildren
           style={{ top: 0, width: Dimensions.get('window').width, height: Dimensions.get('window').height, backgroundColor: 'pink' }}
-          rowHeight={200}
-          numRenderRows={10}
+          rowHeight={130}
+          numRenderRows={15}
+          data={["Row 1", "Row 2", "Row 3", "Row 4", "Row 5", "Row 6", "Row 7", "Row 8", "Row 9", "Row 10"]}
           loopMode="no-loop"
         />
       </View>

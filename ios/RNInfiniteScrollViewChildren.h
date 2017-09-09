@@ -20,5 +20,6 @@
 @property (nonatomic) float yeep;
 @property (nonatomic) NSInteger numRenderRows;
 @property (nonatomic) NSString *loopMode;
+@property (nonatomic) NSArray *data;
 
 @end
