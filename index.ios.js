@@ -22,7 +22,7 @@ class RNInfiniteScrollViewRowTemplate extends Component {
     return (
       <View style={{padding: 10, width: 120, height: 80, backgroundColor: 'red'}}>
         <TextInput
-          style={{ backgroundColor: 'blue', flexGrow: 1 }}
+          style={{ backgroundColor: 'yellow', flexGrow: 1 }}
           editable={false}
           value={this.props.rowValue}
         />
@@ -53,9 +53,9 @@ class example extends Component {
         <RNInfiniteScrollViewChildren
           style={{ top: 0, width: Dimensions.get('window').width, height: Dimensions.get('window').height, backgroundColor: 'pink' }}
           rowHeight={130}
-          numRenderRows={15}
-          data={["Row 1", "Row 2", "Row 3", "Row 4", "Row 5", "Row 6", "Row 7", "Row 8", "Row 9", "Row 10"]}
-          loopMode="no-loop"
+          numRenderRows={8}
+          data={["Row 1", "Row 2", "Row 3", "Row 4", "Row 5", "Row 6", "Row 7", "Row 8", "Row 9", "Row 10", "Row 11", "Row 12", "Row 13", "Row 14", "Row 15"]}
+          loopMode="repeat-empty"
         />
       </View>
     );

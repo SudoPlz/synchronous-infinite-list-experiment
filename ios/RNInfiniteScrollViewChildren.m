@@ -36,7 +36,7 @@ int createdRowCnt = 0;
 
 - (instancetype)initWithBridge:(RCTBridge *)bridge {
   RCTAssertParam(bridge);
-  NSLog(@"****** initWithBridge BEGAN");
+//  NSLog(@"****** initWithBridge BEGAN");
   if ((self = [super initWithFrame:CGRectZero])) {
     _eventDispatcher = bridge.eventDispatcher;
     
@@ -60,7 +60,7 @@ int createdRowCnt = 0;
     self.showsVerticalScrollIndicator = YES; // TODO change that to NO in time
     self.showsHorizontalScrollIndicator = NO;
     self.loopMode = LOOP_MODE_NONE;
-    NSLog(@"****** initWithBridge ENDED");
+//    NSLog(@"****** initWithBridge ENDED");
   }
   
   return self;
@@ -87,8 +87,9 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
   CGFloat contentHeight = [self contentSize].height;
   CGFloat centerOffsetY = (contentHeight - [self bounds].size.height) / 2.0; // find the center Y point
   CGFloat distanceFromCenter = fabs(currentOffset.y - centerOffsetY); // find the distance of the center Y
-  NSLog(@"distance from center: %f", distanceFromCenter);
-  NSLog(@"_renderRows.count: %lu", (unsigned long)_renderRows.count);
+//  NSLog(@"rowsAreCreated %d", rowsAreCreated);
+//  NSLog(@"distance from center: %f > %f", distanceFromCenter, (contentHeight / 4.0));
+//  NSLog(@"_renderRows.count: %lu", (unsigned long)_renderRows.count);
 //  NSLog(@"cur offset %f w/ content height %f, and center x: %f, so the distance from center is %f", currentOffset.y, contentHeight, centerOffsetY, distanceFromCenter);
 
   if (rowsAreCreated == YES // if the rows have been created
@@ -103,7 +104,7 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
     for (UIView *view in _renderRows) {
       CGPoint center = view.center;
       center.y += (centerOffsetY - currentOffset.y);
-      NSLog(@"New center %f", center.y);
+//      NSLog(@"New center %f", center.y);
       view.center = center;
     }
     
@@ -146,7 +147,7 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
 
 - (void)moveFirstRenderRowToEnd {
   if (rowsAreCreated == YES && self.numRenderRows > 0 && [_renderRows count] > 0) {
-    NSLog(@"************* moveFirstRenderRowToEnd");
+//    NSLog(@"************* moveFirstRenderRowToEnd");
     UIView *view = _renderRows[_firstRenderRow];
     CGPoint center = view.center;
     center.y += self.rowHeight * self.numRenderRows;
@@ -171,7 +172,7 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
 
 - (void)moveLastRenderRowToBeginning {
   if (rowsAreCreated == YES && self.numRenderRows > 0 && [_renderRows count] > 0) {
-    NSLog(@"******* moveLastRenderRowToBeginning");
+//    NSLog(@"******* moveLastRenderRowToBeginning");
     int _lastRenderRow = (_firstRenderRow + self.numRenderRows - 1) % (int)self.numRenderRows;
     UIView *view = _renderRows[_lastRenderRow];
     CGPoint center = view.center;
@@ -196,7 +197,7 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
 - (void)bind:(UIView *)child atIndex:(int)childIndex toRowIndex:(int)rowIndex
 {
   if (data != nil) {
-      NSLog(@"******* Binding childIndex %d to data row %d.", childIndex, rowIndex);
+//      NSLog(@"******* Binding childIndex %d to data row %d.", childIndex, rowIndex);
     
     RCCSyncRootView *curRowView = _renderRows[childIndex];
 
@@ -220,7 +221,7 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
             [NSNumber numberWithInt:(int) data.count - moduloRowIndex];
           // we do that because we want the values to start again from the end of the array once the user reaches child 0 (a.k.a when rowIndex is negative)
         }
-        NSLog(@"rowIndex %d was translated to %d because %d mod %lu", rowIndex, newDataIndex.intValue, rowIndex, (unsigned long)data.count);
+//        NSLog(@"rowIndex %d was translated to %d because %d mod %lu", rowIndex, newDataIndex.intValue, rowIndex, (unsigned long)data.count);
       }
       
       if (newDataIndex != nil) { // if we have a newDataIndex value
@@ -236,34 +237,37 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
 
 
 - (void) createRows {
-  NSLog(@"**** NO of rows: %ld", self.numRenderRows);
-  NSLog(@" loop? %@", self.loopMode);
+//  NSLog(@"**** NO of rows: %ld", self.numRenderRows);
+//  NSLog(@" loop? %@", self.loopMode);
   rowsAreCreated = NO;
   createdRowCnt = 0;
 
   for (int i = 0; i < self.numRenderRows; i++)
   {
+//    NSLog(@"%d", i);
     dispatch_async(dispatch_get_main_queue(), ^
                    {
+                     NSString* curRowValue;
                      if (data != nil && [data count] > i) {
-                       NSString* curRowValue = [data objectAtIndex:i];
-                       RCCSyncRootView *rootView = [[RCCSyncRootView alloc] initWithBridge:_bridge moduleName:@"RNInfiniteScrollViewRowTemplate" initialProperties:@{ @"rowValue" : curRowValue }];
-                       //        [rootView setFrame:CGRectMake(0, 0, 1000, self.rowHeight)];
+                       curRowValue = [data objectAtIndex:i];
+                     }
+
+                     RCCSyncRootView *rootView = [[RCCSyncRootView alloc] initWithBridge:_bridge moduleName:@"RNInfiniteScrollViewRowTemplate" initialProperties:curRowValue ? @{ @"rowValue" : curRowValue } : @{}];
+
                        CGPoint center = rootView.center;
                        center.y = self.rowHeight * i;
-                       NSLog(@"******* ITEM AT %d, will place that at %f", i, center.y);
+//                       NSLog(@"******* ITEM AT %d, will place that at %f", i, center.y);
                        rootView.center = center;
                        rootView.backgroundColor = [UIColor yellowColor];
                        [_renderRows addObject:rootView];
                        [self insertSubview:rootView atIndex:i];
                        createdRowCnt ++;
-                       NSLog(@" Created row %d", createdRowCnt);
+//                       NSLog(@" Created row %d out of %ld", createdRowCnt, (long)self.numRenderRows);
                        if (createdRowCnt == self.numRenderRows) {
-                         NSLog(@" @@@@@@ ROWS CREATED");
+//                         NSLog(@" @@@@@@ ROWS CREATED");
                          rowsAreCreated = YES;
                          [self recenterIfNecessary];
                        }
-                     }
                    });
   }
 }
