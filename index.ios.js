@@ -41,12 +41,20 @@ class example extends Component {
     }, 1000)
   }
   render() {
+    /**
+     * 3 loopModes supported:
+     * 
+     * no-loop,
+     * repeat-empty,
+     * repeat-edge,
+     */
     return (
       <View style={styles.container}>
         <RNInfiniteScrollViewChildren
           style={{ top: 0, width: Dimensions.get('window').width, height: Dimensions.get('window').height, backgroundColor: 'pink' }}
           rowHeight={200}
           numRenderRows={10}
+          loopMode="no-loop"
         />
       </View>
     );

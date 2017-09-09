@@ -17,7 +17,8 @@
 - (void) createRows;
 
 @property (nonatomic) float rowHeight;
+@property (nonatomic) float yeep;
 @property (nonatomic) NSInteger numRenderRows;
-@property (nonatomic) BOOL loop;
+@property (nonatomic) NSString *loopMode;
 
 @end

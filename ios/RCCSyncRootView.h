@@ -5,5 +5,6 @@
 @interface RCCSyncRootView : RCTRootView
 
 - (void)updateProps:(NSDictionary *)newProps;
+@property (nonatomic) float isEmptyView;
 
 @end

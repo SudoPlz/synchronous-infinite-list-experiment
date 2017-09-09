@@ -20,7 +20,6 @@
 - (void)runApplication:(RCTBridge *)bridge
 {
   NSNumber *rootTag = [self performSelector:@selector(reactTag) withObject:nil];
-  
   RCCSyncRegistry *module = [self registryModule];
   NSDictionary *details = [module.registry objectForKey:self.moduleName];
   NSDictionary *binding = details[@"props"];
