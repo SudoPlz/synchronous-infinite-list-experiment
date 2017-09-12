@@ -28,6 +28,8 @@
   
   RCTUIManager<UIManagerInternals> *uiManager = (RCTUIManager<UIManagerInternals>*)self.bridge.uiManager;
   
+  _boundToIndex = 0;
+
   self.recipeTagToTag = [NSMutableDictionary new];
   self.recipeTagToTag[@(1)] = rootTag;
   

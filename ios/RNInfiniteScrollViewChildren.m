@@ -115,10 +115,10 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
   for (RCCSyncRootView *view in _renderRows) {
     CGPoint center = view.center;
     center.y += (recenterPoint.y - currentOffset.y);
-    NSLog(@"New center %f", center.y);
+//    NSLog(@"New center %f", center.y);
     view.center = center;
     if (bindStart != nil) {
-      NSLog(@"Binding it to %d", bindStart.intValue + i);
+//      NSLog(@"Binding it to %d", bindStart.intValue + i);
       [self bindView:view toRowIndex:(int)(bindStart.intValue + i)];
     }
     i++;
@@ -159,7 +159,7 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
 
 - (void)layoutSubviews {
   [super layoutSubviews];
-//  NSLog(@"_firstRenderRowOffset: %f, _firstRenderRow: %d, _firstRowIndex: %d", _firstRenderRowOffset, _firstRenderRow, _firstRowIndex);
+  NSLog(@"_firstRenderRowOffset: %f, _firstRenderRow: %d, _firstRowIndex: %d", _firstRenderRowOffset, _firstRenderRow, _firstRowIndex);
   [self recenterIfNecessary];
   [self swapViewsIfNecessary];
 }
@@ -190,14 +190,6 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
     CGPoint center = view.center;
     center.y -= self.rowHeight * self.numRenderRows;
     view.center = center;
-    //    int rowToBindTo;
-    
-    //    if ([self.loopMode  isEqual: LOOP_MODE_REPEAT_EDGE]) {
-    //      // if the loopMode is repeat w/ using the edge views
-    //      rowToBindTo = (int);
-    //    } else { // if the loopMode is set to no-loop or to repeat-empty
-    //      rowToBindTo = EMPTY_ROW_ID;
-    //    }
     [self bindView:view toRowIndex:(_firstRowIndex - 1)];
     _firstRenderRowOffset -= self.rowHeight;
     _firstRenderRow = _lastRenderRow;
@@ -210,16 +202,21 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
 //  RCCSyncRootView *curRowView = _renderRows[childIndex];
 //  NSDictionary* newDt = [bindFactory getValueForRow:rowIndex andDatasource:data];
 //  if (newDt) {
+//curRowView.boundToIndex = rowIndex;
 //    [curRowView updateProps:newDt];
 //  }
 //}
 
 - (void)bindView:(RCCSyncRootView *)child toRowIndex:(int)rowIndex
 {
-//  NSLog(@"Now requesting to bind row index %d", rowIndex);
-  NSDictionary* newDt = [bindFactory getValueForRow:rowIndex andDatasource:data];
-  if (newDt) {
-    [child updateProps:newDt];
+  if (child.boundToIndex != rowIndex || rowIndex == 0) {
+    NSLog(@"Now requesting to bind row index %d", rowIndex);
+    NSDictionary* newDt = [bindFactory getValueForRow:rowIndex andDatasource:data];
+    if (newDt) {
+      NSLog(@"GOT DATA %@", newDt);
+      child.boundToIndex = rowIndex;
+      [child updateProps:newDt];
+    }
   }
 }
 
@@ -243,7 +240,7 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
                      }
                      
                      RCCSyncRootView *rootView = [[RCCSyncRootView alloc] initWithBridge:_bridge moduleName:@"RNInfiniteScrollViewRowTemplate" initialProperties:curRowValue ? @{ @"rowValue" : curRowValue } : @{}];
-                     
+                     rootView.boundToIndex = i;
                      CGPoint center = rootView.center;
                      center.y = self.rowHeight * i;
                      //                       NSLog(@"******* ITEM AT %d, will place that at %f", i, center.y);
@@ -267,8 +264,42 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
 }
 
 - (void) appendDataToDataSource: (NSArray*) newData {
-  NSLog(@" NEW DATA %@", newData);
+  if (_firstRowIndex + self.numRenderRows > data.count) { // if we have children rendered above the data count limit
+    // we have to update the data props for those children
+    for (RCCSyncRootView *view in _renderRows) {
+      int viewBindIndex = view.boundToIndex;
+      int rowsAfterViewBindIndex = viewBindIndex - (int) data.count;
+      if (rowsAfterViewBindIndex >= 0
+          && rowsAfterViewBindIndex < newData.count) {
+        [view updateProps:@{ @"rowValue": newData[rowsAfterViewBindIndex]}];
+      }
+    }
+  }
+  
+  // then insert the new data in the end of our datasource
   [data addObjectsFromArray:newData];
+}
+
+
+- (void) prependDataToDataSource: (NSArray*) newData {
+  if (_firstRowIndex < 0) { // if we have children rendered below the current data count
+    // we have to update the data props for those children
+    for (RCCSyncRootView *view in _renderRows) {
+      int viewBindIndex = view.boundToIndex;
+      if (viewBindIndex < 0 && fabs(viewBindIndex) <= newData.count) {
+        NSLog(@"Now translating data index: %d to newData index: %d", viewBindIndex, (int) newData.count + viewBindIndex);
+        [view updateProps:@{ @"rowValue": newData[newData.count + viewBindIndex ]}];
+      }
+    }
+    _firstRowIndex += newData.count;
+  }
+  
+  // then insert the new data in the beggining of our datasource
+  NSIndexSet *indexes = [NSIndexSet indexSetWithIndexesInRange:
+                         NSMakeRange(0,[newData count])];
+  [data insertObjects:newData atIndexes:indexes];
+  
+  NSLog(@"### The datasource is now: %@", data);
 }
 
 - (void) scrollToItemWithIndex: (int) itemIndex animated: (BOOL) animated {

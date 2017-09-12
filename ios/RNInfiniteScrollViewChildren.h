@@ -20,7 +20,8 @@
 - (instancetype)initWithBridge:(RCTBridge *)bridge NS_DESIGNATED_INITIALIZER;
 - (void) createRows;
 - (void) appendDataToDataSource: (NSArray*) newData;
-
+- (void) prependDataToDataSource: (NSArray*) newData;
+  
 @property (nonatomic) float rowHeight;
 @property (nonatomic) float yeep;
 @property (nonatomic) int initialPosition;

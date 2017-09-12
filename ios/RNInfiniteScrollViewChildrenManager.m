@@ -34,4 +34,9 @@ RCT_EXPORT_METHOD(appendDataToDataSource: (NSArray *) newData) {
   [_scrollView appendDataToDataSource:newData];
 }
 
+RCT_EXPORT_METHOD(prependDataToDataSource: (NSArray *) newData) {
+  [_scrollView prependDataToDataSource:newData];
+}
+
+
 @end
