@@ -23,6 +23,10 @@
 		832341BD1AAA6AB300B99B32 /* libRCTText.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 832341B51AAA6A8300B99B32 /* libRCTText.a */; };
 		CCE6D0B11D0B6B7D00F81E39 /* RNInfiniteScrollViewChildren.m in Sources */ = {isa = PBXBuildFile; fileRef = CCE6D0AE1D0B6B7D00F81E39 /* RNInfiniteScrollViewChildren.m */; };
 		CCE6D0B21D0B6B7D00F81E39 /* RNInfiniteScrollViewChildrenManager.m in Sources */ = {isa = PBXBuildFile; fileRef = CCE6D0B01D0B6B7D00F81E39 /* RNInfiniteScrollViewChildrenManager.m */; };
+		D34F34421F6856DD00E96CEE /* ScrollViewBindFactory.m in Sources */ = {isa = PBXBuildFile; fileRef = D34F34411F6856DD00E96CEE /* ScrollViewBindFactory.m */; };
+		D34F34611F6858D100E96CEE /* NoLoopBinder.m in Sources */ = {isa = PBXBuildFile; fileRef = D34F34601F6858D100E96CEE /* NoLoopBinder.m */; };
+		D34F34641F6859B400E96CEE /* RepeatEmptyBinder.m in Sources */ = {isa = PBXBuildFile; fileRef = D34F34631F6859B400E96CEE /* RepeatEmptyBinder.m */; };
+		D34F34671F685A2200E96CEE /* RepeatEdgeBinder.m in Sources */ = {isa = PBXBuildFile; fileRef = D34F34661F685A2200E96CEE /* RepeatEdgeBinder.m */; };
 		D3DA31071F60B22E00C86554 /* RCCSyncRegistry.m in Sources */ = {isa = PBXBuildFile; fileRef = D3DA31001F60B22E00C86554 /* RCCSyncRegistry.m */; };
 		D3DA31081F60B22E00C86554 /* RCCSyncRootView.m in Sources */ = {isa = PBXBuildFile; fileRef = D3DA31021F60B22E00C86554 /* RCCSyncRootView.m */; };
 /* End PBXBuildFile section */
@@ -251,6 +255,14 @@
 		CCE6D0AE1D0B6B7D00F81E39 /* RNInfiniteScrollViewChildren.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RNInfiniteScrollViewChildren.m; sourceTree = "<group>"; };
 		CCE6D0AF1D0B6B7D00F81E39 /* RNInfiniteScrollViewChildrenManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RNInfiniteScrollViewChildrenManager.h; sourceTree = "<group>"; };
 		CCE6D0B01D0B6B7D00F81E39 /* RNInfiniteScrollViewChildrenManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RNInfiniteScrollViewChildrenManager.m; sourceTree = "<group>"; };
+		D34F34401F6856DD00E96CEE /* ScrollViewBindFactory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ScrollViewBindFactory.h; sourceTree = "<group>"; };
+		D34F34411F6856DD00E96CEE /* ScrollViewBindFactory.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ScrollViewBindFactory.m; sourceTree = "<group>"; };
+		D34F345F1F6858D100E96CEE /* NoLoopBinder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NoLoopBinder.h; sourceTree = "<group>"; };
+		D34F34601F6858D100E96CEE /* NoLoopBinder.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NoLoopBinder.m; sourceTree = "<group>"; };
+		D34F34621F6859B400E96CEE /* RepeatEmptyBinder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RepeatEmptyBinder.h; sourceTree = "<group>"; };
+		D34F34631F6859B400E96CEE /* RepeatEmptyBinder.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RepeatEmptyBinder.m; sourceTree = "<group>"; };
+		D34F34651F685A2200E96CEE /* RepeatEdgeBinder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RepeatEdgeBinder.h; sourceTree = "<group>"; };
+		D34F34661F685A2200E96CEE /* RepeatEdgeBinder.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RepeatEdgeBinder.m; sourceTree = "<group>"; };
 		D3DA30FF1F60B22E00C86554 /* RCCSyncRegistry.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RCCSyncRegistry.h; sourceTree = "<group>"; };
 		D3DA31001F60B22E00C86554 /* RCCSyncRegistry.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RCCSyncRegistry.m; sourceTree = "<group>"; };
 		D3DA31011F60B22E00C86554 /* RCCSyncRootView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RCCSyncRootView.h; sourceTree = "<group>"; };
@@ -463,12 +475,28 @@
 		CCE6D0AC1D0B6B6800F81E39 /* InfiniteScrollViewChildren */ = {
 			isa = PBXGroup;
 			children = (
+				D34F345E1F68589300E96CEE /* Binders */,
 				CCE6D0AF1D0B6B7D00F81E39 /* RNInfiniteScrollViewChildrenManager.h */,
 				CCE6D0B01D0B6B7D00F81E39 /* RNInfiniteScrollViewChildrenManager.m */,
 				CCE6D0AD1D0B6B7D00F81E39 /* RNInfiniteScrollViewChildren.h */,
 				CCE6D0AE1D0B6B7D00F81E39 /* RNInfiniteScrollViewChildren.m */,
 			);
 			name = InfiniteScrollViewChildren;
+			sourceTree = "<group>";
+		};
+		D34F345E1F68589300E96CEE /* Binders */ = {
+			isa = PBXGroup;
+			children = (
+				D34F34401F6856DD00E96CEE /* ScrollViewBindFactory.h */,
+				D34F34411F6856DD00E96CEE /* ScrollViewBindFactory.m */,
+				D34F345F1F6858D100E96CEE /* NoLoopBinder.h */,
+				D34F34601F6858D100E96CEE /* NoLoopBinder.m */,
+				D34F34621F6859B400E96CEE /* RepeatEmptyBinder.h */,
+				D34F34631F6859B400E96CEE /* RepeatEmptyBinder.m */,
+				D34F34651F685A2200E96CEE /* RepeatEdgeBinder.h */,
+				D34F34661F685A2200E96CEE /* RepeatEdgeBinder.m */,
+			);
+			name = Binders;
 			sourceTree = "<group>";
 		};
 		D3DA30FE1F60B21D00C86554 /* SyncRendering */ = {
@@ -841,7 +869,11 @@
 				13B07FC11A68108700A75B9A /* main.m in Sources */,
 				D3DA31081F60B22E00C86554 /* RCCSyncRootView.m in Sources */,
 				CCE6D0B21D0B6B7D00F81E39 /* RNInfiniteScrollViewChildrenManager.m in Sources */,
+				D34F34611F6858D100E96CEE /* NoLoopBinder.m in Sources */,
+				D34F34671F685A2200E96CEE /* RepeatEdgeBinder.m in Sources */,
+				D34F34421F6856DD00E96CEE /* ScrollViewBindFactory.m in Sources */,
 				CCE6D0B11D0B6B7D00F81E39 /* RNInfiniteScrollViewChildren.m in Sources */,
+				D34F34641F6859B400E96CEE /* RepeatEmptyBinder.m in Sources */,
 				D3DA31071F60B22E00C86554 /* RCCSyncRegistry.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

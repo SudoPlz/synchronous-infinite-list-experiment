@@ -8,6 +8,10 @@
 
 #import <UIKit/UIKit.h>
 #import "RCCSyncRootView.h"
+#import "ScrollViewBindFactory.h"
+#import "NoLoopBinder.h"
+#import "RepeatEdgeBinder.h"
+#import "RepeatEmptyBinder.h"
 
 @class RCTBridge;
 
@@ -15,11 +19,14 @@
 
 - (instancetype)initWithBridge:(RCTBridge *)bridge NS_DESIGNATED_INITIALIZER;
 - (void) createRows;
+- (void) appendDataToDataSource: (NSArray*) newData;
 
 @property (nonatomic) float rowHeight;
 @property (nonatomic) float yeep;
+@property (nonatomic) int initialPosition;
 @property (nonatomic) NSInteger numRenderRows;
 @property (nonatomic) NSString *loopMode;
-@property (nonatomic) NSArray *data;
+@property (nonatomic) NSMutableArray *data;
+
 
 @end

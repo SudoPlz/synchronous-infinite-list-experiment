@@ -38,7 +38,11 @@ class example extends Component {
   componentWillMount() {
     setTimeout(() => {
       IScrollManager.prepareRows();
-    }, 1000)
+    }, 500);
+
+    // setTimeout(() => {
+    //   IScrollManager.appendDataToDataSource(['Row 16', 'Row 17', 'Row 18']);
+    // }, 1000);
   }
   render() {
     /**
@@ -56,6 +60,7 @@ class example extends Component {
           numRenderRows={8}
           data={["Row 1", "Row 2", "Row 3", "Row 4", "Row 5", "Row 6", "Row 7", "Row 8", "Row 9", "Row 10", "Row 11", "Row 12", "Row 13", "Row 14", "Row 15"]}
           loopMode="repeat-empty"
+          initialPosition={4}
         />
       </View>
     );

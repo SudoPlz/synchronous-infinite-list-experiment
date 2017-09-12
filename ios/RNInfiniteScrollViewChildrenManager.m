@@ -23,10 +23,15 @@ RCT_EXPORT_VIEW_PROPERTY(rowHeight, float)
 RCT_EXPORT_VIEW_PROPERTY(numRenderRows, NSInteger)
 RCT_EXPORT_VIEW_PROPERTY(loopMode, NSString)
 RCT_EXPORT_VIEW_PROPERTY(data, NSArray)
+RCT_EXPORT_VIEW_PROPERTY(initialPosition, int)
 
 RCT_EXPORT_METHOD(prepareRows)
 {
   [_scrollView createRows];
+}
+
+RCT_EXPORT_METHOD(appendDataToDataSource: (NSArray *) newData) {
+  [_scrollView appendDataToDataSource:newData];
 }
 
 @end
