@@ -15,7 +15,7 @@
     //      NSLog(@"******* Binding childIndex %d to data row %d.", childIndex, rowIndex);
     
     if (rowIndex >= 0 && rowIndex < data.count) { // if the data index is within our data bounds
-      return @{ @"rowValue" : [data objectAtIndex:rowIndex]};
+      return @{ @"item" : [data objectAtIndex:rowIndex], @"index": [NSNumber numberWithInt:rowIndex]};
     }
   }
   return @{};

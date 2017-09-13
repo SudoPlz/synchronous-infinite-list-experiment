@@ -24,14 +24,14 @@ class RNInfiniteScrollViewRowTemplate extends Component {
         <TextInput
           style={{ backgroundColor: 'yellow', flexGrow: 1 }}
           editable={false}
-          value={this.props.rowValue}
+          value={this.props.item}
         />
       </View>
     );
   }
 }
 
-SyncRegistry.registerComponent('RNInfiniteScrollViewRowTemplate', () => RNInfiniteScrollViewRowTemplate, ['rowValue']);
+SyncRegistry.registerComponent('RNInfiniteScrollViewRowTemplate', () => RNInfiniteScrollViewRowTemplate, ['item']);
 var IScrollManager = NativeModules.RNInfiniteScrollViewChildrenManager;
 
 class example extends Component {
@@ -47,6 +47,10 @@ class example extends Component {
     // setTimeout(() => {
     //   IScrollManager.appendDataToDataSource(["Row 16", "Row 17", "Row 18"]);
     // }, 1000);
+
+    setTimeout(() => {
+      IScrollManager.updateDataAtIndex(1, "row 33");
+    }, 1000);
   }
   render() {
     /**

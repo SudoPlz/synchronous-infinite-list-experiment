@@ -21,6 +21,7 @@
 - (void) createRows;
 - (void) appendDataToDataSource: (NSArray*) newData;
 - (void) prependDataToDataSource: (NSArray*) newData;
+- (void) updateDataAtIndex: (int) rowIndex withNewData: (id) newData;
   
 @property (nonatomic) float rowHeight;
 @property (nonatomic) float rowWidth;

@@ -40,5 +40,10 @@ RCT_EXPORT_METHOD(prependDataToDataSource: (NSArray *) newData) {
   [_scrollView prependDataToDataSource:newData];
 }
 
+RCT_EXPORT_METHOD(updateDataAtIndex: (int) rowIndex withNewData: (id) newData) {
+  [_scrollView updateDataAtIndex:rowIndex withNewData:newData];
+}
+
+
 
 @end

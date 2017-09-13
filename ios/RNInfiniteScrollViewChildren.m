@@ -296,7 +296,7 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
                        curRowValue = [data objectAtIndex:i];
                      }
                      
-                     RCCSyncRootView *rootView = [[RCCSyncRootView alloc] initWithBridge:_bridge moduleName:@"RNInfiniteScrollViewRowTemplate" initialProperties:curRowValue ? @{ @"rowValue" : curRowValue } : @{}];
+                     RCCSyncRootView *rootView = [[RCCSyncRootView alloc] initWithBridge:_bridge moduleName:@"RNInfiniteScrollViewRowTemplate" initialProperties:curRowValue ? @{ @"item" : curRowValue, @"index": [NSNumber numberWithInt:i] } : @{ @"index": [NSNumber numberWithInt:i]}];
                      rootView.boundToIndex = i;
                      CGPoint center = rootView.center;
                      if (_horizontal == NO) { // vertical mode
@@ -355,7 +355,7 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
       int rowsAfterViewBindIndex = viewBindIndex - (int) data.count;
       if (rowsAfterViewBindIndex >= 0
           && rowsAfterViewBindIndex < newData.count) {
-        [view updateProps:@{ @"rowValue": newData[rowsAfterViewBindIndex]}];
+        [view updateProps:@{ @"item": newData[rowsAfterViewBindIndex], @"index": [NSNumber numberWithInt:viewBindIndex]}];
       }
     }
   }
@@ -372,7 +372,7 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
       int viewBindIndex = view.boundToIndex;
       if (viewBindIndex < 0 && fabs(viewBindIndex) <= newData.count) {
         NSLog(@"Now translating data index: %d to newData index: %d", viewBindIndex, (int) newData.count + viewBindIndex);
-        [view updateProps:@{ @"rowValue": newData[newData.count + viewBindIndex ]}];
+        [view updateProps:@{ @"item": newData[newData.count + viewBindIndex ], @"index": [NSNumber numberWithInt:viewBindIndex] }];
       }
     }
     _firstRowIndex += newData.count;
@@ -384,6 +384,26 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
   [data insertObjects:newData atIndexes:indexes];
   
   NSLog(@"### The datasource is now: %@", data);
+}
+
+- (void) updateDataAtIndex: (int) rowIndex withNewData: (id) newData {
+  if (rowIndex > 0 && rowIndex < data.count) { // if the rowIndex is within our data range
+    [data replaceObjectAtIndex:rowIndex withObject:newData];
+  }
+  
+   // if the row index is
+  if (rowIndex > _firstRowIndex // above the first rendered index
+      && rowIndex < _firstRowIndex + self.numRenderRows) { // and below the last rendered index
+    // that means we have to update the view containing that data as well
+
+    for (RCCSyncRootView *view in _renderRows) {
+      int viewBindIndex = view.boundToIndex;
+      if (viewBindIndex == rowIndex) {
+        NSLog(@"Now replacing data at index: %d w/ newData %@", viewBindIndex, newData);
+        [view updateProps:@{ @"item": newData, @"index": [NSNumber numberWithInt:viewBindIndex] }];
+      }
+    }
+  }
 }
 
 - (void) scrollToItemWithIndex: (int) itemIndex animated: (BOOL) animated {
