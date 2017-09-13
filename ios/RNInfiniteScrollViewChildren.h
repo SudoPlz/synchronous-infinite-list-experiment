@@ -23,11 +23,13 @@
 - (void) prependDataToDataSource: (NSArray*) newData;
   
 @property (nonatomic) float rowHeight;
+@property (nonatomic) float rowWidth;
 @property (nonatomic) float yeep;
 @property (nonatomic) int initialPosition;
 @property (nonatomic) NSInteger numRenderRows;
 @property (nonatomic) NSString *loopMode;
 @property (nonatomic) NSMutableArray *data;
+@property (nonatomic) BOOL horizontal;
 
 
 @end
