@@ -14,24 +14,64 @@ import { AppRegistry,
 import SyncRegistry from './lib/SyncRegistry';
 const RNInfiniteScrollViewChildren = requireNativeComponent('RNInfiniteScrollViewChildren', null);
 
-
+const dataObj = [{
+  name: "Row 1",
+  width: 850,
+  height: 150,
+},{
+  name: "Row 2",
+  width: 150,
+  height: 30,
+},{
+  name: "Row 3",
+  width: 500,
+  height: 150,
+},{
+  name: "Row 4",
+  width: 750,
+  height: 150,
+},{
+  name: "Row 5",
+  width: 150,
+  height: 150,
+},{
+  name: "Row 6",
+  width: 150,
+  height: 150,
+},{
+  name: "Row 7",
+  width: 150,
+  height: 150,
+},{
+  name: "Row 8",
+  width: 150,
+  height: 150,
+},{
+  name: "Row 9",
+  width: 150,
+  height: 150,
+},{
+  name: "Row 10",
+  width: 150,
+  height: 150,
+}];
 
 
 class RNInfiniteScrollViewRowTemplate extends Component {
   render() {
     return (
-      <View style={{padding: 10, width: Dimensions.get('window').width, height: 80, backgroundColor: '#AAAA3377'}}>
+      <View style={{padding: 10, width: this.props['item.width'], height: this.props['item.height'], backgroundColor: '#AAAA3377'}}>
         <TextInput
           style={{ backgroundColor: '#FFFFFF88', flexGrow: 1 }}
           editable={false}
-          value={this.props.item}
+          value={this.props['item.name']}
         />
       </View>
     );
   }
 }
 
-SyncRegistry.registerComponent('RNInfiniteScrollViewRowTemplate', () => RNInfiniteScrollViewRowTemplate, ['item']);
+SyncRegistry.registerComponent('RNInfiniteScrollViewRowTemplate', () => RNInfiniteScrollViewRowTemplate, ['item.name','item.width','item.height', 'index']);
 var IScrollManager = NativeModules.RNInfiniteScrollViewChildrenManager;
 
 class example extends Component {
@@ -72,11 +112,10 @@ class example extends Component {
           horizontal
           rowHeight={150}
           rowWidth={Dimensions.get('window').width}
-          paging
+          dynamicViewSizes
           numRenderRows={10}
-          data={["Row 1", "Row 2", "Row 3", "Row 4", "Row 5", "Row 6", "Row 7", "Row 8", "Row 9", "Row 10", "Row 11", "Row 12", "Row 13", "Row 14", "Row 15"]}
+          data={dataObj}
           loopMode="no-loop"
-          initialPosition={6}
         />
       </View>
     );

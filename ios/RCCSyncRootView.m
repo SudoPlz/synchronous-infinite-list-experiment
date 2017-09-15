@@ -114,10 +114,11 @@
   
   for (NSString *propName in (NSDictionary*)props)
   {
+    
     id propValue = [props objectForKey:propName];
     if (!onlyChanges)
     {
-      [res setObject:propValue forKey:propName];
+      [res setObject:propValue forKey:propName]; // i.e propValue is @"__item__"
     }
     
     if ([propValue isKindOfClass:[NSString class]])
@@ -125,7 +126,14 @@
       NSString *valueKey = [inverseBinding objectForKey:propValue];
       if (valueKey)
       {
-        id newValue = [values objectForKey:valueKey];
+        id newValue;
+
+        // if item name is a nested object string (i.e item.name.firstName) - contains fullstops
+        if ([valueKey rangeOfString:@"."].location != NSNotFound) { // if valueKey contains fullstops
+           newValue = [values valueForKeyPath:valueKey]; // get the nested object
+        } else { // otherwise it's a plain object (not nested)
+          newValue = [values objectForKey:valueKey];
+        }
         if (newValue == nil) newValue = [NSNull null];
         [res setObject:newValue forKey:propName];
       }
@@ -160,5 +168,6 @@
 {
   return [self.bridge moduleForClass:RCCSyncRegistry.class];
 }
+
 
 @end

@@ -58,7 +58,7 @@ ScrollViewBindFactory* bindFactory;
     _initialPosition = 0;
     _horizontal = NO;
     _paging = NO;
-    self.pagingEnabled = _paging;
+//    self.pagingEnabled = _paging;
     
 
     //    emptyRowView = [[RCCSyncRootView alloc] initWithBridge:_bridge moduleName:@"RNInfiniteScrollViewRowTemplate" initialProperties:@{}];
@@ -70,8 +70,6 @@ ScrollViewBindFactory* bindFactory;
     self.showsHorizontalScrollIndicator = YES; // TODO change that to NO in time
     self.loopMode = LOOP_MODE_NONE;
     bindFactory = [[NoLoopBinder alloc] init];
-    [self setMinimumZoomScale:0];
-    [self setMaximumZoomScale:3];
     //    NSLog(@"****** initWithBridge ENDED");
   }
   
@@ -94,10 +92,57 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
 
 #pragma mark - inner methods
 
+
+- (float) calculateViewSizeFromIndex: (int) fromIndex toIndex: (int) toIndex {
+  if (fromIndex > toIndex) {
+    RCTLogError(@"RNInfiniteScrollView: toIndex should be greater than fromIndex.");
+  }
+//  NSLog(@" About to find size between %d to %d", fromIndex, toIndex);
+  float totalViewSize = 0;
+  for (int i = fromIndex; i < toIndex; i++ ) {
+    if (i >= 0 && i < data.count) {
+      NSDictionary* curRowDt = data[i];
+      if (_horizontal) { // horizontal mode
+        totalViewSize += [curRowDt[@"width"] floatValue];
+      } else { // vertical mode
+        totalViewSize += [curRowDt[@"height"] floatValue];
+      }
+    } else {
+      totalViewSize += _horizontal ? self.rowWidth : self.rowHeight;
+    }
+  }
+  return totalViewSize;
+}
+
+
+- (float) calculateViewSizeForRowCnt: (int) rowCnt {
+  if (_horizontal) { // horizontal mode
+    return self.rowWidth * rowCnt;
+  } else { // vertical mode
+    return self.rowHeight * rowCnt;
+    
+  }
+  return 0;
+}
+
+
+              
+
 - (void)recenterIfNecessary
 {
   CGPoint currentOffset = [self contentOffset]; // cur scroll values
-  if (_horizontal == NO) { // vertical mode
+  if (_horizontal) { // horizontal mode
+    CGFloat contentWidth = [self contentSize].width;
+    CGFloat centerOffsetX = (contentWidth - [self bounds].size.width) / 2.0; // find the center Y point
+    CGFloat distanceFromCenter = fabs(currentOffset.x - centerOffsetX); // find the distance of the center Y
+    if (rowsAreCreated == YES // if the rows have been created
+        && _renderRows.count > 0 // and we got renderRows
+        && distanceFromCenter > (contentWidth * RECENTER_PERCENTAGE)) // and we have scrolled more than 25% ahead
+    {
+      //      NSLog(@" Must recenter because distance from center (%f) is more than 25% (%f), contentWidth=%f", distanceFromCenter, contentWidth * RECENTER_PERCENTAGE, contentWidth);
+      [self recenterTo: CGPointMake(centerOffsetX, 0)];
+    }
+  } else { // vertical mode
     CGFloat contentHeight = [self contentSize].height;
     CGFloat centerOffsetY = (contentHeight - [self bounds].size.height) / 2.0; // find the center Y point
     CGFloat distanceFromCenter = fabs(currentOffset.y - centerOffsetY); // find the distance of the center Y
@@ -107,24 +152,13 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
     {
       [self recenterTo: CGPointMake(0, centerOffsetY)];
     }
-  } else { // horizontal mode
-    CGFloat contentWidth = [self contentSize].width;
-    CGFloat centerOffsetX = (contentWidth - [self bounds].size.width) / 2.0; // find the center Y point
-    CGFloat distanceFromCenter = fabs(currentOffset.x - centerOffsetX); // find the distance of the center Y
-    if (rowsAreCreated == YES // if the rows have been created
-        && _renderRows.count > 0 // and we got renderRows
-        && distanceFromCenter > (contentWidth * RECENTER_PERCENTAGE)) // and we have scrolled more than 25% ahead
-    {
-//      NSLog(@" Must recenter because distance from center (%f) is more than 25% (%f), contentWidth=%f", distanceFromCenter, contentWidth * RECENTER_PERCENTAGE, contentWidth);
-      [self recenterTo: CGPointMake(centerOffsetX, 0)];
-    }
   }
 }
 
 - (void) recenterTo: (CGPoint) recenterPoint withNewBindingsStartingFrom: (NSNumber*) bindStart {
   CGPoint currentOffset = [self contentOffset]; // cur scroll values
-  if (_horizontal == YES) { // horizontal mode
-    NSLog(@" Now recentering to x: %f, y: %f", recenterPoint.x, currentOffset.y);
+  if (_horizontal) { // horizontal mode
+//    NSLog(@" Now recentering to x: %f, y: %f", recenterPoint.x, currentOffset.y);
     
     // setting the Y value to be equal to the center Y point
     self.contentOffset = CGPointMake(recenterPoint.x, currentOffset.y);
@@ -142,7 +176,7 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
     }
     _contentOffsetShift += (recenterPoint.x - currentOffset.x);
   } else { // vertical mode
-    NSLog(@" Now recentering to x: %f, y: %f", currentOffset.x, recenterPoint.y);
+//    NSLog(@" Now recentering to x: %f, y: %f", currentOffset.x, recenterPoint.y);
     
     // setting the Y value to be equal to the center Y point
     self.contentOffset = CGPointMake(currentOffset.x, recenterPoint.y);
@@ -170,29 +204,13 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
 - (void) swapViewsIfNecessary {
   CGPoint currentOffset = [self contentOffset];
   
-  if (_horizontal == NO) { // vertical mode
-    double curYValue = currentOffset.y - _contentOffsetShift;
-    double furthestPointBottom = _firstRenderRowOffset + (self.rowHeight * (self.numRenderRows - ROW_BUFFER));
-    /* the furthest point bottom is
-     _firstRenderRowOffset (where we started rendering)
-     + the height of all the rows minus the ROW_BUFFER (rows outside the screen)
-     */
-    if (curYValue + self.frame.size.height > furthestPointBottom) {
-      [self moveFirstRenderRowToEnd];
-    }
-    
-    double furthestPointTop = _firstRenderRowOffset + (self.rowHeight * ROW_BUFFER);
-    /* the furthest point ahead is
-     _firstRenderRowOffset (where we started rendering)
-     + the height of the ROW_BUFFER rows (rows outside the screen)
-     */
-    
-    if (curYValue < furthestPointTop) {
-      [self moveLastRenderRowToBeginning];
-    }
-  } else { // horizontal mode
+  if (_horizontal) { // horizontal mode
     double curXValue = currentOffset.x - _contentOffsetShift;
-    double furthestPointRight = _firstRenderRowOffset + (self.rowWidth * (self.numRenderRows - ROW_BUFFER));
+    double furthestPointRight = _firstRenderRowOffset
+    + (self.dynamicViewSizes ?
+       [self calculateViewSizeFromIndex:_firstRowIndex toIndex:(_firstRowIndex + (int) self.numRenderRows - ROW_BUFFER)]
+       :
+       [self calculateViewSizeForRowCnt:((int) self.numRenderRows - ROW_BUFFER)]);
     /* the furthest point right is
      _firstRenderRowOffset (where we started rendering)
      + the width of all the rows minus the ROW_BUFFER (rows outside the screen)
@@ -202,7 +220,11 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
       [self moveFirstRenderRowToEnd];
     }
     
-    double furthestPointLeft = _firstRenderRowOffset + (self.rowWidth * ROW_BUFFER);
+    double furthestPointLeft = _firstRenderRowOffset
+    + (self.dynamicViewSizes ?
+       [self calculateViewSizeFromIndex:_firstRowIndex toIndex:(_firstRowIndex + ROW_BUFFER)]
+       :
+       [self calculateViewSizeForRowCnt:ROW_BUFFER]);
 //    NSLog(@"furthestPointLeft: %f plus 2 more rows (%f) ", furthestPointLeft, (self.rowWidth * ROW_BUFFER));
     /* the furthest point left is
      _firstRenderRowOffset (where we started rendering)
@@ -213,22 +235,65 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
 //      NSLog(@"cur X: %f, < furthestPointLeft %f ? ", curXValue, furthestPointLeft);
       [self moveLastRenderRowToBeginning];
     }
+  } else { // vertical mode
+    double curYValue = currentOffset.y - _contentOffsetShift;
+    double furthestPointBottom = _firstRenderRowOffset
+    + (self.dynamicViewSizes ?
+       [self calculateViewSizeFromIndex:_firstRowIndex toIndex:(_firstRowIndex + (int) self.numRenderRows - ROW_BUFFER)]
+       :
+       [self calculateViewSizeForRowCnt:((int) self.numRenderRows - ROW_BUFFER)]);
+    /* the furthest point bottom is
+     _firstRenderRowOffset (where we started rendering)
+     + the height of all the rows minus the ROW_BUFFER (rows outside the screen)
+     */
+    if (curYValue + self.frame.size.height > furthestPointBottom) {
+      [self moveFirstRenderRowToEnd];
+    }
+    
+    double furthestPointTop = _firstRenderRowOffset
+    + (self.dynamicViewSizes ?
+       [self calculateViewSizeFromIndex:_firstRowIndex toIndex:(_firstRowIndex + ROW_BUFFER)]
+       :
+       [self calculateViewSizeForRowCnt:ROW_BUFFER]);
+    /* the furthest point ahead is
+     _firstRenderRowOffset (where we started rendering)
+     + the height of the ROW_BUFFER rows (rows outside the screen)
+     */
+    
+    if (curYValue < furthestPointTop) {
+      [self moveLastRenderRowToBeginning];
+    }
   }
-  
 }
 
 - (void)moveFirstRenderRowToEnd {
   //  NSLog(@" abt to moveFirstRenderRowToEnd");
   if (rowsAreCreated == YES && self.numRenderRows > 0 && [_renderRows count] > 0) {
-//        NSLog(@"************* moveFirstRenderRowToEnd");
+        NSLog(@"************* moveFirstRenderRowToEnd");
     RCCSyncRootView *view = _renderRows[_firstRenderRow];
     CGPoint center = view.center;
-    if (_horizontal == NO) { // vertical mode
-      center.y += self.rowHeight * self.numRenderRows;
-      _firstRenderRowOffset += self.rowHeight;
-    } else { // horizontal mode
-      center.x += self.rowWidth * self.numRenderRows;
-      _firstRenderRowOffset += self.rowWidth;
+    
+    float newViewOffset = 0;
+    if (self.dynamicViewSizes) { // if the sizing calculation is dynamic
+      // calculate and add all the view heights
+      newViewOffset = [self calculateViewSizeFromIndex:_firstRowIndex toIndex:(_firstRowIndex + (int) self.numRenderRows)];
+      
+      // and add 1 row height to the _firstRenderRowOffset
+      _firstRenderRowOffset += [self calculateViewSizeFromIndex:_firstRowIndex toIndex:(_firstRowIndex + 1)];
+      
+    } else { // else if the sizing is static
+      
+      // calculate and add all the view heights
+      newViewOffset = [self calculateViewSizeForRowCnt: (int) self.numRenderRows];
+      
+      // and add 1 row height to the _firstRenderRowOffset
+      _firstRenderRowOffset += [self calculateViewSizeForRowCnt:1];
+    }
+
+    if (_horizontal) { // horizontal mode
+      center.x += newViewOffset;
+    } else {
+      center.y += newViewOffset;
     }
     view.center = center;
     
@@ -241,21 +306,40 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
 - (void)moveLastRenderRowToBeginning {
   //  NSLog(@" abt to moveLastRenderRowToBeginning");
   if (rowsAreCreated == YES && self.numRenderRows > 0 && [_renderRows count] > 0) {
-//        NSLog(@"******* moveLastRenderRowToBeginning");
+        NSLog(@"******* moveLastRenderRowToBeginning");
     int _lastRenderRow = (_firstRenderRow + self.numRenderRows - 1) % (int)self.numRenderRows;
     RCCSyncRootView *view = _renderRows[_lastRenderRow];
     CGPoint center = view.center;
-    if (_horizontal == NO) { // vertical mode
-      center.y -= self.rowHeight * self.numRenderRows;
-      _firstRenderRowOffset -= self.rowHeight;
-    } else { // horizontal mode
-      center.x -= self.rowWidth * self.numRenderRows;
-      _firstRenderRowOffset -= self.rowWidth;
+    
+
+    float newViewOffset = 0;
+    if (self.dynamicViewSizes) { // if the sizing calculation is dynamic
+      // calculate and add all the view heights
+      newViewOffset = [self calculateViewSizeFromIndex:_firstRowIndex - 1 toIndex:(_firstRowIndex + (int) self.numRenderRows - 1)];
+      
+      // and add 1 row height to the _firstRenderRowOffset
+      _firstRenderRowOffset -= [self calculateViewSizeFromIndex:_firstRowIndex - 1 toIndex:_firstRowIndex];
+      
+    } else { // else if the sizing is static
+      
+      // calculate and add all the view heights
+      newViewOffset = [self calculateViewSizeForRowCnt: (int) self.numRenderRows];
+      
+      // and add 1 row height to the _firstRenderRowOffset
+      _firstRenderRowOffset -= [self calculateViewSizeForRowCnt:1];
     }
+    
+    if (_horizontal) { // horizontal mode
+      center.x -= newViewOffset;
+    } else {
+      center.y -= newViewOffset;
+    }
+    
     view.center = center;
     [self bindView:view toRowIndex:(_firstRowIndex - 1)];
     _firstRenderRow = _lastRenderRow;
     _firstRowIndex -= 1;
+    NSLog(@"Moved LAST child to  beggining, on %f (%f), so the first render row is now %d", center.x, _firstRenderRowOffset, _firstRowIndex);
   }
 }
 
@@ -275,7 +359,7 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
 //    NSLog(@"Now requesting to bind row index %d", rowIndex);
     NSDictionary* newDt = [bindFactory getValueForRow:rowIndex andDatasource:data];
     if (newDt) {
-//      NSLog(@"GOT DATA %@", newDt);
+      NSLog(@"updating child %d w/  DATA %@", rowIndex, newDt);
       child.boundToIndex = rowIndex;
       [child updateProps:newDt];
     }
@@ -296,7 +380,7 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
     //    NSLog(@"%d", i);
     dispatch_async(dispatch_get_main_queue(), ^
                    {
-                     NSString* curRowValue;
+                     id curRowValue;
                      if (data != nil && [data count] > i) {
                        curRowValue = [data objectAtIndex:i];
                      }
@@ -304,10 +388,21 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
                      RCCSyncRootView *rootView = [[RCCSyncRootView alloc] initWithBridge:_bridge moduleName:@"RNInfiniteScrollViewRowTemplate" initialProperties:curRowValue ? @{ @"item" : curRowValue, @"index": [NSNumber numberWithInt:i] } : @{ @"index": [NSNumber numberWithInt:i]}];
                      rootView.boundToIndex = i;
                      CGPoint center = rootView.center;
-                     if (_horizontal == NO) { // vertical mode
-                       center.y = self.rowHeight * i;
-                     } else { // horizontal mode
-                       center.x = self.rowWidth * i;
+                     
+                     float newViewOffset = 0;
+                     if (self.dynamicViewSizes) { // if the sizing calculation is dynamic
+                       // calculate and add all the view heights
+                       newViewOffset = [self calculateViewSizeFromIndex:0 toIndex:i];
+                     } else { // else if the sizing is static
+                       
+                       // calculate and add all the view heights
+                       newViewOffset = (i * [self calculateViewSizeForRowCnt: 1]);
+                     }
+
+                     if (_horizontal) { // horizontal mode
+                       center.x = newViewOffset;
+                     } else { // vertical mode
+                       center.y = newViewOffset;
                      }
 //                     NSLog(@"******* ITEM AT %d, will be placed that at x: %f, y: %f", i, center.x, center.y);
                      
@@ -320,18 +415,7 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
                      if (createdRowCnt == self.numRenderRows) {
                        NSLog(@" @@@@@@ ROWS CREATED");
                        rowsAreCreated = YES;
-                       if (_horizontal == NO) { // vertical mode
-                         if (self.rowHeight <= 0) {
-                           RCTLogError(@"RNInfiniteScrollView: We need a rowHeight greater than zero for horizontal={false}. Cur value: %f", self.rowHeight);
-
-                         }
-                         if (self.rowWidth > 0) {
-                           NSString *warnMsg = @"RNInfiniteScrollView: You don't really have to specify the rowWidth on horizontal={false} mode";
-                           RCTLogWarn(@"%@", warnMsg);
-                           NSLog(@"%@", warnMsg);
-                         }
-                         self.contentSize = CGSizeMake(self.frame.size.width, self.rowHeight * (data.count - 1));
-                       } else { // horizontal mode
+                       if (_horizontal) { // horizontal mode
                          if (self.rowWidth <= 0) {
                            RCTLogError(@"RNInfiniteScrollView: We need a rowWidth greater than zero for horizontal mode. Cur value: %f", self.rowWidth);
                            
@@ -341,7 +425,27 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
                            RCTLogWarn(@"%@", warnMsg);
                            NSLog(@"%@", warnMsg);
                          }
-                         self.contentSize = CGSizeMake(self.rowWidth * (data.count - 1), self.frame.size.height);
+                         float totalContentWidth = self.dynamicViewSizes ?
+                            [self calculateViewSizeFromIndex:0 toIndex:((int) data.count - 1)]
+                            :
+                            [self calculateViewSizeForRowCnt:((int) data.count - 1)];
+
+                         self.contentSize = CGSizeMake(totalContentWidth, self.frame.size.height);
+                       } else { // vertical mode
+                         if (self.rowHeight <= 0) {
+                           RCTLogError(@"RNInfiniteScrollView: We need a rowHeight greater than zero for horizontal={false}. Cur value: %f", self.rowHeight);
+                           
+                         }
+                         if (self.rowWidth > 0) {
+                           NSString *warnMsg = @"RNInfiniteScrollView: You don't really have to specify the rowWidth on horizontal={false} mode";
+                           RCTLogWarn(@"%@", warnMsg);
+                           NSLog(@"%@", warnMsg);
+                         }
+                         float totalContentHeight = self.dynamicViewSizes ?
+                            [self calculateViewSizeFromIndex:0 toIndex:((int) data.count - 1)]
+                            :
+                            [self calculateViewSizeForRowCnt:((int) data.count - 1)];
+                         self.contentSize = CGSizeMake(self.frame.size.width, totalContentHeight);
                        }
                        
                        if (_initialPosition != 0) {
@@ -411,33 +515,32 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
   }
 }
 
-//- (void) setScrollerZoom: (float) zoomScale animated: (BOOL) animated {
-  NSLog(@" Now zooming to %f", zoomScale);
-  [self setZoomScale:zoomScale animated:animated];
-  dispatch_async(dispatch_get_main_queue(), ^ {
-    RCCSyncRootView* curView = [self getCurrentView];
-    curView.backgroundColor = [UIColor greenColor];
-    NSLog(@"cur view bound to %d", curView.boundToIndex);
-  });
-//}
+- (void) setScrollerZoom: (float) zoomScale animated: (BOOL) animated {
+//  NSLog(@" Now zooming to %f", zoomScale);
+//  [self setZoomScale:zoomScale animated:animated];
+//  dispatch_async(dispatch_get_main_queue(), ^ {
+//    RCCSyncRootView* curView = [self getCurrentView];
+//    curView.backgroundColor = [UIColor greenColor];
+//    NSLog(@"cur view bound to %d", curView.boundToIndex);
+//  });
+}
 
 - (void) scrollToItemWithIndex: (int) itemIndex animated: (BOOL) animated {
-  if (_horizontal == NO) { // vertical mode
-    float newOffsetY = itemIndex * self.rowHeight;
-    
-    if (animated == NO) {
-      CGFloat contentHeight = [self contentSize].height;
-      CGFloat centerOffsetY = (contentHeight - [self bounds].size.height) / 2.0; // find the center Y point
-      
-      [self recenterTo: CGPointMake(0, centerOffsetY) withNewBindingsStartingFrom:[NSNumber numberWithInt:itemIndex]];
-      _firstRenderRowOffset = 0;
-      _firstRenderRow = 0;
-      _firstRowIndex = itemIndex;
+  float newOffset;
+  
+  if (self.dynamicViewSizes) {
+    if (itemIndex > 0) { // if item index positive
+      newOffset = [self calculateViewSizeFromIndex:0 toIndex:itemIndex];
     } else {
-      [self setContentOffset: CGPointMake(0, newOffsetY) animated:YES];
+      newOffset = [self calculateViewSizeFromIndex:itemIndex toIndex:0];
     }
-  } else { // horizontal mode
-    float newOffsetX = itemIndex * self.rowWidth;
+  } else {
+    newOffset = [self calculateViewSizeForRowCnt:itemIndex];
+  }
+  
+  
+  
+  if (_horizontal) { // horizontal mode
     
     if (animated == NO) {
       CGFloat contentWidth = [self contentSize].width;
@@ -448,7 +551,20 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
       _firstRenderRow = 0;
       _firstRowIndex = itemIndex;
     } else {
-      [self setContentOffset: CGPointMake(newOffsetX, 0) animated:YES];
+      [self setContentOffset: CGPointMake(newOffset, 0) animated:YES];
+    }
+  } else { // vertical mode
+    
+    if (animated == NO) {
+      CGFloat contentHeight = [self contentSize].height;
+      CGFloat centerOffsetY = (contentHeight - [self bounds].size.height) / 2.0; // find the center Y point
+      
+      [self recenterTo: CGPointMake(0, centerOffsetY) withNewBindingsStartingFrom:[NSNumber numberWithInt:itemIndex]];
+      _firstRenderRowOffset = 0;
+      _firstRenderRow = 0;
+      _firstRowIndex = itemIndex;
+    } else {
+      [self setContentOffset: CGPointMake(0, newOffset) animated:YES];
     }
   }
 }
@@ -470,7 +586,7 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
   int curViewIndex = [self getCurrentViewIndex];
   int viewIndexDiffFromFirst = curViewIndex - _firstRowIndex;
   int renderedViewIndex = (_firstRenderRow + viewIndexDiffFromFirst) % self.numRenderRows;
-  NSLog(@"renderedViewIndex %d", renderedViewIndex);
+//  NSLog(@"renderedViewIndex %d", renderedViewIndex);
   return renderedViewIndex;
 }
 
@@ -542,7 +658,13 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
 
 - (void) setPaging:(BOOL)paging {
   _paging = paging;
-  self.pagingEnabled = _paging;
+//  self.pagingEnabled = _paging;
 }
 
 @end
+       
+/*
+ _firstRenderRowOffset: -5460
+ _firstRenderRow: 6,
+ _firstRowIndex: -42
+ */

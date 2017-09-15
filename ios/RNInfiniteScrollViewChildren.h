@@ -33,8 +33,7 @@
 @property (nonatomic) NSMutableArray *data;
 @property (nonatomic) BOOL horizontal;
 @property (nonatomic) BOOL paging;
-
-
+@property (nonatomic) BOOL dynamicViewSizes;
 
 
 @end
