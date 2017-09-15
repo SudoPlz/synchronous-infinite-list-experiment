@@ -26,6 +26,7 @@ RCT_EXPORT_VIEW_PROPERTY(loopMode, NSString)
 RCT_EXPORT_VIEW_PROPERTY(data, NSArray)
 RCT_EXPORT_VIEW_PROPERTY(initialPosition, int)
 RCT_EXPORT_VIEW_PROPERTY(horizontal, BOOL)
+RCT_EXPORT_VIEW_PROPERTY(paging, BOOL)
 
 RCT_EXPORT_METHOD(prepareRows)
 {
@@ -44,6 +45,9 @@ RCT_EXPORT_METHOD(updateDataAtIndex: (int) rowIndex withNewData: (id) newData) {
   [_scrollView updateDataAtIndex:rowIndex withNewData:newData];
 }
 
+RCT_EXPORT_METHOD(setScrollerZoom: (float) zoomScale animated: (BOOL) animated) {
+  [_scrollView setScrollerZoom:zoomScale animated:animated];
+}
 
 
 @end

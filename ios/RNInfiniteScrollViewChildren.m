@@ -57,7 +57,10 @@ ScrollViewBindFactory* bindFactory;
     _contentOffsetShift = 0;
     _initialPosition = 0;
     _horizontal = NO;
+    _paging = NO;
+    self.pagingEnabled = _paging;
     
+
     //    emptyRowView = [[RCCSyncRootView alloc] initWithBridge:_bridge moduleName:@"RNInfiniteScrollViewRowTemplate" initialProperties:@{}];
     //    emptyRowView.isEmptyView = YES;
     
@@ -67,6 +70,8 @@ ScrollViewBindFactory* bindFactory;
     self.showsHorizontalScrollIndicator = YES; // TODO change that to NO in time
     self.loopMode = LOOP_MODE_NONE;
     bindFactory = [[NoLoopBinder alloc] init];
+    [self setMinimumZoomScale:0];
+    [self setMaximumZoomScale:3];
     //    NSLog(@"****** initWithBridge ENDED");
   }
   
@@ -193,19 +198,19 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
      + the width of all the rows minus the ROW_BUFFER (rows outside the screen)
      */
     if (curXValue + self.frame.size.width > furthestPointRight) {
-      NSLog(@"curXValue: %f plus frame width %f > furthestPointRight %f", curXValue, self.frame.size.width, furthestPointRight);
+//      NSLog(@"curXValue: %f plus frame width %f > furthestPointRight %f", curXValue, self.frame.size.width, furthestPointRight);
       [self moveFirstRenderRowToEnd];
     }
     
     double furthestPointLeft = _firstRenderRowOffset + (self.rowWidth * ROW_BUFFER);
-    NSLog(@"furthestPointLeft: %f plus 2 more rows (%f) ", furthestPointLeft, (self.rowWidth * ROW_BUFFER));
+//    NSLog(@"furthestPointLeft: %f plus 2 more rows (%f) ", furthestPointLeft, (self.rowWidth * ROW_BUFFER));
     /* the furthest point left is
      _firstRenderRowOffset (where we started rendering)
      + the height (or width) of the ROW_BUFFER rows (rows outside the screen)
      */
     
     if (curXValue < furthestPointLeft) {
-      NSLog(@"cur X: %f, < furthestPointLeft %f ? ", curXValue, furthestPointLeft);
+//      NSLog(@"cur X: %f, < furthestPointLeft %f ? ", curXValue, furthestPointLeft);
       [self moveLastRenderRowToBeginning];
     }
   }
@@ -215,7 +220,7 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
 - (void)moveFirstRenderRowToEnd {
   //  NSLog(@" abt to moveFirstRenderRowToEnd");
   if (rowsAreCreated == YES && self.numRenderRows > 0 && [_renderRows count] > 0) {
-        NSLog(@"************* moveFirstRenderRowToEnd");
+//        NSLog(@"************* moveFirstRenderRowToEnd");
     RCCSyncRootView *view = _renderRows[_firstRenderRow];
     CGPoint center = view.center;
     if (_horizontal == NO) { // vertical mode
@@ -236,7 +241,7 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
 - (void)moveLastRenderRowToBeginning {
   //  NSLog(@" abt to moveLastRenderRowToBeginning");
   if (rowsAreCreated == YES && self.numRenderRows > 0 && [_renderRows count] > 0) {
-        NSLog(@"******* moveLastRenderRowToBeginning");
+//        NSLog(@"******* moveLastRenderRowToBeginning");
     int _lastRenderRow = (_firstRenderRow + self.numRenderRows - 1) % (int)self.numRenderRows;
     RCCSyncRootView *view = _renderRows[_lastRenderRow];
     CGPoint center = view.center;
@@ -304,7 +309,7 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
                      } else { // horizontal mode
                        center.x = self.rowWidth * i;
                      }
-                     NSLog(@"******* ITEM AT %d, will be placed that at x: %f, y: %f", i, center.x, center.y);
+//                     NSLog(@"******* ITEM AT %d, will be placed that at x: %f, y: %f", i, center.x, center.y);
                      
                      rootView.center = center;
                      rootView.backgroundColor = [UIColor yellowColor];
@@ -371,7 +376,7 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
     for (RCCSyncRootView *view in _renderRows) {
       int viewBindIndex = view.boundToIndex;
       if (viewBindIndex < 0 && fabs(viewBindIndex) <= newData.count) {
-        NSLog(@"Now translating data index: %d to newData index: %d", viewBindIndex, (int) newData.count + viewBindIndex);
+//        NSLog(@"Now translating data index: %d to newData index: %d", viewBindIndex, (int) newData.count + viewBindIndex);
         [view updateProps:@{ @"item": newData[newData.count + viewBindIndex ], @"index": [NSNumber numberWithInt:viewBindIndex] }];
       }
     }
@@ -383,7 +388,7 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
                          NSMakeRange(0,[newData count])];
   [data insertObjects:newData atIndexes:indexes];
   
-  NSLog(@"### The datasource is now: %@", data);
+//  NSLog(@"### The datasource is now: %@", data);
 }
 
 - (void) updateDataAtIndex: (int) rowIndex withNewData: (id) newData {
@@ -399,12 +404,22 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
     for (RCCSyncRootView *view in _renderRows) {
       int viewBindIndex = view.boundToIndex;
       if (viewBindIndex == rowIndex) {
-        NSLog(@"Now replacing data at index: %d w/ newData %@", viewBindIndex, newData);
+//        NSLog(@"Now replacing data at index: %d w/ newData %@", viewBindIndex, newData);
         [view updateProps:@{ @"item": newData, @"index": [NSNumber numberWithInt:viewBindIndex] }];
       }
     }
   }
 }
+
+//- (void) setScrollerZoom: (float) zoomScale animated: (BOOL) animated {
+  NSLog(@" Now zooming to %f", zoomScale);
+  [self setZoomScale:zoomScale animated:animated];
+  dispatch_async(dispatch_get_main_queue(), ^ {
+    RCCSyncRootView* curView = [self getCurrentView];
+    curView.backgroundColor = [UIColor greenColor];
+    NSLog(@"cur view bound to %d", curView.boundToIndex);
+  });
+//}
 
 - (void) scrollToItemWithIndex: (int) itemIndex animated: (BOOL) animated {
   if (_horizontal == NO) { // vertical mode
@@ -438,8 +453,43 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
   }
 }
 
+- (int) getCurrentViewIndex {
+  CGPoint currentOffset = [self contentOffset];
+  float scrollPerc;
+  if (_horizontal == NO) { // vertical mode
+    scrollPerc = currentOffset.x / self.contentSize.width;
+  } else { // horizontal mode
+    scrollPerc = currentOffset.y / self.contentSize.height;
+  }
+  
+  return (int) scrollPerc * (int) data.count;
+  
+}
+
+- (int) getCurrentViewExpressedInRenderViewIndex {
+  int curViewIndex = [self getCurrentViewIndex];
+  int viewIndexDiffFromFirst = curViewIndex - _firstRowIndex;
+  int renderedViewIndex = (_firstRenderRow + viewIndexDiffFromFirst) % self.numRenderRows;
+  NSLog(@"renderedViewIndex %d", renderedViewIndex);
+  return renderedViewIndex;
+}
+
+- (RCCSyncRootView*) getCurrentView {
+  int renderedViewIndex = [self getCurrentViewExpressedInRenderViewIndex];
+  if (renderedViewIndex >= 0 && renderedViewIndex < _renderRows.count) {
+    return _renderRows[renderedViewIndex];
+  }
+  return nil;
+}
+
+
+
 
 #pragma mark - UIScrollViewDelegate callbacks
+
+- (UIView*) viewForZoomingInScrollView:(UIScrollView *)scrollView {
+  return nil;
+}
 
 - (void)layoutSubviews {
   [super layoutSubviews];
@@ -488,6 +538,11 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
 
 - (void) setHorizontal:(BOOL)horizontal {
   _horizontal = horizontal;
+}
+
+- (void) setPaging:(BOOL)paging {
+  _paging = paging;
+  self.pagingEnabled = _paging;
 }
 
 @end
